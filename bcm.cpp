@@ -210,13 +210,13 @@ void compress(int b)
 {
 	if (_fseeki64(in, 0, SEEK_END)!=0)
 	{
-		perror("Fseek failed");
+		perror("Fseek() failed");
 		exit(1);
 	}
 	const long long flen=_ftelli64(in);
 	if (flen<0)
 	{
-		perror("Ftell failed");
+		perror("Ftell() failed");
 		exit(1);
 	}
 	if (b>flen)
@@ -241,7 +241,7 @@ void compress(int b)
 		const int p=divbwt(buf, buf, (int*)&buf[b], n);
 		if (p<1)
 		{
-			perror("Divbwt failed");
+			perror("Divbwt() failed");
 			exit(1);
 		}
 
@@ -341,7 +341,7 @@ int main(int argc, char** argv)
 				<<(argv[1][strlen(argv[1])-1]=='k'?10:20);
 			if (block_size<1)
 			{
-				fprintf(stderr, "Invalid block size\n");
+				fprintf(stderr, "Invalid block size!\n");
 				exit(1);
 			}
 			break;
@@ -416,15 +416,15 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	fprintf(stdout, "%s: ", argv[1]);
-	fflush(stdout);
+	fprintf(stderr, "%s: ", argv[1]);
+	fflush(stderr);
 
 	if (do_decomp)
 		decompress();
 	else
 		compress(block_size);
 
-	fprintf(stdout, "%lld->%lld in %.3fs\n", _ftelli64(in), _ftelli64(out),
+	fprintf(stderr, "%lld->%lld in %.3fs\n", _ftelli64(in), _ftelli64(out),
 		double(clock()-start)/CLOCKS_PER_SEC);
 
 	fclose(in);
