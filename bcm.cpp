@@ -348,7 +348,7 @@ int main(int argc, char** argv)
 				<<(argv[1][strlen(argv[1])-1]=='k'?10:20);
 			if (block_size<1)
 			{
-				fprintf(stderr, "Invalid block size!\n");
+				fprintf(stderr, "Invalid block size\n");
 				exit(1);
 			}
 			break;
