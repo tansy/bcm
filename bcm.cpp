@@ -41,14 +41,21 @@ struct Encoder
 		high=uint(-1);
 	}
 
-	void Encode(int bit, uint p)
+	void EncodeBit0(uint p)
 	{
-		const uint mid=low+((ulonglong(high-low)*(p<<14))>>32);
+		low+=((ulonglong(high-low)*(p<<14))>>32)+1;
 
-		if (bit)
-			high=mid;
-		else
-			low=mid+1;
+		while ((low^high)<(1<<24))
+		{
+			putc(low>>24, out);
+			low<<=8;
+			high=(high<<8)|255;
+		}
+	}
+
+	void EncodeBit1(uint p)
+	{
+		high=low+((ulonglong(high-low)*(p<<14))>>32);
 
 		while ((low^high)<(1<<24))
 		{
@@ -104,12 +111,14 @@ struct Counter
 		p=1<<15;
 	}
 
-	void Update(int bit)
+	void UpdateBit0()
 	{
-		if (bit)
-			p+=(p^65535)>>RATE;
-		else
-			p-=p>>RATE;
+		p-=p>>RATE;
+	}
+
+	void UpdateBit1()
+	{
+		p+=(p^65535)>>RATE;
 	}
 };
 
@@ -138,7 +147,7 @@ struct CM: Encoder
 		}
 	}
 
-	void Put(int c)
+	void Encode(int c)
 	{
 		if (c1==c2)
 			++run;
@@ -161,21 +170,32 @@ struct CM: Encoder
 
 			const int bit=((c&128)!=0);
 			c+=c;
-			Encoder::Encode(bit, p+ssep+ssep+ssep);
 
-			counter0[ctx].Update(bit);
-			counter1[c1][ctx].Update(bit);
-			counter2[f][ctx][idx].Update(bit);
-			counter2[f][ctx][idx+1].Update(bit);
-
-			ctx+=ctx+bit;
+			if (bit)
+			{
+				Encoder::EncodeBit1(p+ssep+ssep+ssep);
+				counter0[ctx].UpdateBit1();
+				counter1[c1][ctx].UpdateBit1();
+				counter2[f][ctx][idx].UpdateBit1();
+				counter2[f][ctx][idx+1].UpdateBit1();
+				ctx+=ctx+1;
+			}
+			else
+			{
+				Encoder::EncodeBit0(p+ssep+ssep+ssep);
+				counter0[ctx].UpdateBit0();
+				counter1[c1][ctx].UpdateBit0();
+				counter2[f][ctx][idx].UpdateBit0();
+				counter2[f][ctx][idx+1].UpdateBit0();
+				ctx+=ctx;
+			}
 		}
 
 		c2=c1;
-		c1=byte(ctx);
+		c1=ctx&255;
 	}
 
-	int Get()
+	int Decode()
 	{
 		if (c1==c2)
 			++run;
@@ -198,16 +218,26 @@ struct CM: Encoder
 
 			const int bit=Encoder::Decode(p+ssep+ssep+ssep);
 
-			counter0[ctx].Update(bit);
-			counter1[c1][ctx].Update(bit);
-			counter2[f][ctx][idx].Update(bit);
-			counter2[f][ctx][idx+1].Update(bit);
-
-			ctx+=ctx+bit;
+			if (bit)
+			{
+				counter0[ctx].UpdateBit1();
+				counter1[c1][ctx].UpdateBit1();
+				counter2[f][ctx][idx].UpdateBit1();
+				counter2[f][ctx][idx+1].UpdateBit1();
+				ctx+=ctx+1;
+			}
+			else
+			{
+				counter0[ctx].UpdateBit0();
+				counter1[c1][ctx].UpdateBit0();
+				counter2[f][ctx][idx].UpdateBit0();
+				counter2[f][ctx][idx+1].UpdateBit0();
+				ctx+=ctx;
+			}
 		}
 
 		c2=c1;
-		return c1=byte(ctx);
+		return c1=ctx&255;
 	}
 } cm;
 
@@ -252,23 +282,23 @@ void compress(int b)
 			exit(1);
 		}
 
-		cm.Put(n>>24);
-		cm.Put(n>>16);
-		cm.Put(n>>8);
-		cm.Put(n);
-		cm.Put(p>>24);
-		cm.Put(p>>16);
-		cm.Put(p>>8);
-		cm.Put(p);
+		cm.Encode(n>>24);
+		cm.Encode(n>>16);
+		cm.Encode(n>>8);
+		cm.Encode(n);
+		cm.Encode(p>>24);
+		cm.Encode(p>>16);
+		cm.Encode(p>>8);
+		cm.Encode(p);
 
 		for (int i=0; i<n; ++i)
-			cm.Put(buf[i]);
+			cm.Encode(buf[i]);
 	}
 
-	cm.Put(0); // EOF
-	cm.Put(0);
-	cm.Put(0);
-	cm.Put(0);
+	cm.Encode(0); // EOF
+	cm.Encode(0);
+	cm.Encode(0);
+	cm.Encode(0);
 
 	cm.Flush();
 }
@@ -290,10 +320,10 @@ void decompress()
 
 	for (;;)
 	{
-		const int n=(cm.Get()<<24)
-			|(cm.Get()<<16)
-			|(cm.Get()<<8)
-			|cm.Get();
+		const int n=(cm.Decode()<<24)
+			|(cm.Decode()<<16)
+			|(cm.Decode()<<8)
+			|cm.Decode();
 		if (n==0)
 			break;
 		if (b==0)
@@ -305,10 +335,10 @@ void decompress()
 				exit(1);
 			}
 		}
-		const int p=(cm.Get()<<24)
-			|(cm.Get()<<16)
-			|(cm.Get()<<8)
-			|cm.Get();
+		const int p=(cm.Decode()<<24)
+			|(cm.Decode()<<16)
+			|(cm.Decode()<<8)
+			|cm.Decode();
 		if ((n<1)||(n>b)||(p<1)||(p>n))
 		{
 			fprintf(stderr, "File corrupted\n");
@@ -317,7 +347,7 @@ void decompress()
 		// Inverse BWT
 		int t[257]={0};
 		for (int i=0; i<n; ++i)
-			++t[(buf[i]=cm.Get())+1];
+			++t[(buf[i]=cm.Decode())+1];
 		for (int i=1; i<256; ++i)
 			t[i]+=t[i-1];
 		int* next=(int*)&buf[b];
