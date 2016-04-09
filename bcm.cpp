@@ -399,7 +399,7 @@ int main(int argc, char** argv)
 	if (argc<2)
 	{
 		fprintf(stderr,
-			"BCM - A BWT-based file compressor, v1.011\n"
+			"BCM - A BWT-based file compressor, v1.01\n"
 			"\n"
 			"Usage: BCM [options] infile [outfile]\n"
 			"\n"
