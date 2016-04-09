@@ -1,5 +1,9 @@
-// bcm.cpp is written and placed in the public domain by Ilya Muravyov
-//
+/*
+
+BCM - A BWT-based file compressor
+Written and placed in the public domain by Ilya Muravyov
+
+*/
 
 #ifdef __GNUC__
 #define _FILE_OFFSET_BITS 64
