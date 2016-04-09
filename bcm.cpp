@@ -168,7 +168,7 @@ struct CM: Encoder
 			const int x2=counter2[f][ctx][idx+1].p;
 			const int ssep=x1+(((x2-x1)*(p&4095))>>12);
 
-			const int bit=((c&128)!=0);
+			const int bit=c&128;
 			c+=c;
 
 			if (bit)
@@ -245,7 +245,7 @@ byte* buf;
 
 void compress(int b)
 {
-	if (_fseeki64(in, 0, SEEK_END)!=0)
+	if (_fseeki64(in, 0, SEEK_END))
 	{
 		perror("Fseek() failed");
 		exit(1);
@@ -305,10 +305,10 @@ void compress(int b)
 
 void decompress()
 {
-	if ((getc(in)!=magic[0])
-		||(getc(in)!=magic[1])
-		||(getc(in)!=magic[2])
-		||(getc(in)!=magic[3]))
+	if (getc(in)!=magic[0]
+		|| getc(in)!=magic[1]
+		|| getc(in)!=magic[2]
+		|| getc(in)!=magic[3])
 	{
 		fprintf(stderr, "Not in BCM format\n");
 		exit(1);
@@ -324,9 +324,9 @@ void decompress()
 			|(cm.Decode()<<16)
 			|(cm.Decode()<<8)
 			|cm.Decode();
-		if (n==0)
+		if (!n) // EOF
 			break;
-		if (b==0)
+		if (!b)
 		{
 			buf=(byte*)calloc(b=n, 5);
 			if (!buf)
@@ -339,7 +339,7 @@ void decompress()
 			|(cm.Decode()<<16)
 			|(cm.Decode()<<8)
 			|cm.Decode();
-		if ((n<1)||(n>b)||(p<1)||(p>n))
+		if (n<1 || n>b || p<1 || p>n)
 		{
 			fprintf(stderr, "File corrupted\n");
 			exit(1);
@@ -353,7 +353,7 @@ void decompress()
 		int* next=(int*)&buf[b];
 		for (int i=0; i<n; ++i)
 			next[t[buf[i]]++]=i+(i>=p);
-		for (int i=p; i!=0;)
+		for (int i=p; i;)
 		{
 			i=next[i-1];
 			putc(buf[i-(i>=p)], out);
@@ -369,7 +369,7 @@ int main(int argc, char** argv)
 	bool do_decomp=false;
 	bool overwrite=false;
 
-	while ((argc>1)&&(*argv[1]=='-'))
+	while (argc>1 && *argv[1]=='-')
 	{
 		switch (argv[1][1])
 		{
@@ -424,7 +424,7 @@ int main(int argc, char** argv)
 		if (do_decomp)
 		{
 			const int p=strlen(ofname)-4;
-			if ((p>0)&&(strcmp(&ofname[p], ".bcm")==0))
+			if (p>0 && !strcmp(&ofname[p], ".bcm"))
 				ofname[p]='\0';
 			else
 				strcat(ofname, ".out");
