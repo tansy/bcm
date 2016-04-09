@@ -35,8 +35,11 @@ struct Encoder
 	uint high;
 
 	Encoder()
-		: code(0), low(0), high(-1)
-	{}
+	{
+		code=0;
+		low=0;
+		high=uint(-1);
+	}
 
 	void Encode(int bit, uint p)
 	{
@@ -97,8 +100,9 @@ struct Counter
 	int p;
 
 	Counter()
-		: p(1<<15)
-	{}
+	{
+		p=1<<15;
+	}
 
 	void Update(int bit)
 	{
@@ -119,8 +123,11 @@ struct CM: Encoder
 	int run;
 
 	CM()
-		: c1(0), c2(0), run(0)
 	{
+		c1=0;
+		c2=0;
+		run=0;
+		
 		for (int i=0; i<2; ++i)
 		{
 			for (int j=0; j<256; ++j)
