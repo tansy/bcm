@@ -28,9 +28,8 @@ const char magic[]="BCM1";
 FILE* in;
 FILE* out;
 
-class Encoder
+struct Encoder
 {
-public:
 	uint code;
 	uint low;
 	uint high;
@@ -93,9 +92,8 @@ public:
 };
 
 template<int RATE>
-class Counter
+struct Counter
 {
-public:
 	int p;
 
 	Counter()
@@ -111,9 +109,8 @@ public:
 	}
 };
 
-class CM: public Encoder
+struct CM: Encoder
 {
-public:
 	Counter<2> counter0[256];
 	Counter<4> counter1[256][256];
 	Counter<6> counter2[2][256][17];
@@ -327,7 +324,7 @@ void decompress()
 	}
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
 	const clock_t start=clock();
 
@@ -335,7 +332,7 @@ int main(int argc, char* argv[])
 	bool do_decomp=false;
 	bool overwrite=false;
 
-	while ((argc>1)&&(argv[1][0]=='-'))
+	while ((argc>1)&&(*argv[1]=='-'))
 	{
 		switch (argv[1][1])
 		{
@@ -365,14 +362,14 @@ int main(int argc, char* argv[])
 	if (argc<2)
 	{
 		fprintf(stderr,
-			"BCM - A BWT-based file compressor, v1.00\n"
+			"BCM - A BWT-based file compressor, v1.01\n"
 			"\n"
 			"Usage: BCM [options] infile [outfile]\n"
 			"\n"
 			"Options:\n"
-			"  -b<N>[k] Set block size to N MB or KB (default is 20 MB)\n"
-			"  -d       Decompress\n"
-			"  -f       Force overwrite of output file\n");
+			"  -b#[k] Set block size to # MB or KB (default is 20 MB)\n"
+			"  -d     Decompress\n"
+			"  -f     Force overwrite of output file\n");
 		exit(1);
 	}
 
@@ -427,8 +424,7 @@ int main(int argc, char* argv[])
 	else
 		compress(block_size);
 
-	fprintf(stdout, "%lld -> %lld in %.3fs\n",
-		_ftelli64(in), _ftelli64(out),
+	fprintf(stdout, "%lld->%lld in %.3fs\n", _ftelli64(in), _ftelli64(out),
 		double(clock()-start)/CLOCKS_PER_SEC);
 
 	fclose(in);
