@@ -18,4 +18,4 @@ BCM -9      | 20,789,667 bytes  |
 Ilya Muravyov
 
 ### Thanks
-Special thanks to Ilya Grebnov, Matt Mahoney, Eugene Shelwien, Alexander Rhatushnyak, Przemyslaw Skibinski, Malcolm Taylor and LovePimple.
+Special thanks to Ilya Grebnov, Yuta Mori, Matt Mahoney, Eugene Shelwien, Alexander Rhatushnyak, Przemyslaw Skibinski, Malcolm Taylor and LovePimple.
