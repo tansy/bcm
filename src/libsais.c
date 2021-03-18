@@ -42,7 +42,7 @@ Please see the file LICENSE for full copyright information.
     #define FORCEINLINE inline __attribute__((__always_inline__))
 #elif defined(_MSC_VER) || defined(__INTEL_COMPILER)
     #define RESTRICT __restrict
-    #define FORCEINLINE inline __forceinline
+    #define FORCEINLINE __forceinline
 #else
     #error Your compiler, configuration or platform is not supported.
 #endif
