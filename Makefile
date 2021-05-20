@@ -1,4 +1,4 @@
-# bcm Makkefile
+# bcm Makefile
 
 TARGET     = bcm
 CC         = gcc
@@ -13,6 +13,7 @@ SRCS := src/libsais.c src/bcm.cpp
 OBJS := $(SRCS)
 OBJS := $(OBJS:.c=.o)
 OBJS := $(OBJS:.cpp=.o)
+
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
